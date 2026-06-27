@@ -8,14 +8,8 @@
        À MODIFIER : les couleurs !
        ============================== */
     :root {
-      --couleur-fond:    #1a1a2e;
-      --couleur-titre:   #e94560;
-      --couleur-carte-1: #e94560;
-      --couleur-carte-2: #f5a623;
-      --couleur-carte-3: #4ecdc4;
-      --couleur-carte-4: #a29bfe;
-      --couleur-carte-5: #55efc4;
-      --couleur-carte-6: #fd79a8;
+      --couleur-fond:  #1a1a2e;
+      --couleur-titre: #e94560;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -35,7 +29,7 @@
     h1 {
       color: var(--couleur-titre);
       font-size: 2em;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       letter-spacing: 3px;
     }
 
@@ -45,34 +39,28 @@
       font-size: 0.9em;
     }
 
-    /* Le conteneur du carrousel */
     .carrousel-fenetre {
       width: 80vw;
       overflow: hidden;
-      position: relative;
     }
 
     .carrousel-piste {
       display: flex;
       gap: 20px;
       transition: transform 0.4s ease;
-      /* La piste se déplace grâce au JS */
     }
 
     /* ==============================
-       À MODIFIER : les cartes !
+       LA CARTE — taille fixe, tout rentre dedans
        ============================== */
     .carte {
+      width: 220px;           /* largeur fixe */
       min-width: 220px;
-      height: 300px;
+      height: 300px;          /* hauteur fixe */
       border-radius: 20px;
+      overflow: hidden;       /* rien ne dépasse */
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 4em;
-      font-weight: bold;
-      color: white;
       cursor: pointer;
       transition: transform 0.2s, box-shadow 0.2s;
       box-shadow: 0 8px 30px rgba(0,0,0,0.4);
@@ -83,18 +71,58 @@
       box-shadow: 0 15px 40px rgba(0,0,0,0.5);
     }
 
-    .carte p {
-      font-size: 0.35em;
-      margin-top: 10px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
+    /* Zone principale : image ou ASCII art */
+    .carte-corps {
+      flex: 1;                /* prend tout l'espace au-dessus du titre */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 12px;
     }
 
-    /* Boutons navigation */
+    /* --- IMAGE --- */
+    /* object-fit: cover remplit la zone sans déformer l'image */
+    .carte-corps img {
+      width: calc(100% + 24px);   /* annuler le padding pour remplir bord à bord */
+      height: calc(100% + 24px);
+      margin: -12px;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+
+    /* --- ASCII ART --- */
+    /* Le JS calcule automatiquement l'échelle pour tout faire rentrer */
+    .carte-corps pre {
+      font-family: 'Courier New', Courier, monospace;
+      color: white;
+      line-height: 1.3;
+      white-space: pre;
+      text-align: center;
+      transform-origin: center center;
+      /* font-size de base — le JS la réduit si besoin */
+      font-size: 14px;
+    }
+
+    /* Titre en bas de la carte */
+    .carte-titre {
+      background: rgba(0,0,0,0.45);
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-size: 0.85em;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    /* Boutons */
     .boutons {
       display: flex;
       gap: 15px;
-      margin-top: 30px;
+      margin-top: 25px;
     }
 
     button {
@@ -108,15 +136,12 @@
       transition: background 0.2s;
     }
 
-    button:hover {
-      background: rgba(255,255,255,0.25);
-    }
+    button:hover { background: rgba(255,255,255,0.25); }
 
-    /* Indicateurs points */
     .points {
       display: flex;
       gap: 10px;
-      margin-top: 20px;
+      margin-top: 15px;
     }
 
     .point {
@@ -124,6 +149,7 @@
       height: 10px;
       border-radius: 50%;
       background: rgba(255,255,255,0.3);
+      cursor: pointer;
       transition: background 0.3s, transform 0.3s;
     }
 
@@ -135,22 +161,121 @@
 </head>
 <body>
 
-  <h1>🎠 Mon Carrousel</h1>
-  <p class="astuce">Utilise la molette de la souris ou les boutons !</p>
+  <h1>Mon Carrousel</h1>
+  <p class="astuce">Molette, boutons ou touches clavier ← →</p>
 
   <div class="carrousel-fenetre" id="fenetre">
     <div class="carrousel-piste" id="piste">
 
-      <!-- ==============================
-           À MODIFIER : ajoute tes cartes !
-           Change les émojis et les textes.
-           ============================== -->
-      <div class="carte" style="background: var(--couleur-carte-1)">🌟<p>Étoile</p></div>
-      <div class="carte" style="background: var(--couleur-carte-2)">🚀<p>Fusée</p></div>
-      <div class="carte" style="background: var(--couleur-carte-3)">🌊<p>Vague</p></div>
-      <div class="carte" style="background: var(--couleur-carte-4)">🦄<p>Licorne</p></div>
-      <div class="carte" style="background: var(--couleur-carte-5)">🌈<p>Arc-en-ciel</p></div>
-      <div class="carte" style="background: var(--couleur-carte-6)">🎵<p>Musique</p></div>
+<!-- =============================================================
+     À MODIFIER : tes cartes !
+
+     CARTE AVEC ASCII ART :
+     ───────────────────────
+     <div class="carte" style="background: #1a1a2e">
+       <div class="carte-corps">
+         <pre>
+ton ascii art ici
+         </pre>
+       </div>
+       <div class="carte-titre">Ton Titre</div>
+     </div>
+
+     CARTE AVEC IMAGE :
+     ───────────────────
+     <div class="carte" style="background: #000">
+       <div class="carte-corps">
+         <img src="photo.jpg" alt="description">
+       </div>
+       <div class="carte-titre">Ton Titre</div>
+     </div>
+================================================================ -->
+
+      <div class="carte" style="background: #0d1b2a">
+        <div class="carte-corps"><pre>
+  /\___/\
+ (  o o  )
+  =( Y )=
+   )   (
+  (_)-(_)</pre></div>
+        <div class="carte-titre">Chat</div>
+      </div>
+
+      <div class="carte" style="background: #1b0a2e">
+        <div class="carte-corps"><pre>
+     /\
+    /  \
+   | ** |
+   |    |
+  /|    |\
+ / |    | \
+/  |    |  \
+   |    |
+   | /\ |
+   |/  \|
+    \  /
+     \/</pre></div>
+        <div class="carte-titre">Fusee</div>
+      </div>
+
+      <div class="carte" style="background: #0a2a1b">
+        <div class="carte-corps"><pre>
+      /\
+     /  \
+    /    \
+   /______\
+   |  []  |
+   |      |
+   |  /\  |
+   | /  \ |
+   |/    \|</pre></div>
+        <div class="carte-titre">Maison</div>
+      </div>
+
+      <div class="carte" style="background: #2a1b0a">
+        <div class="carte-corps"><pre>
+  .-------.
+  | O   O |
+  |   ^   |
+  |  ---  |
+  '-------'
+      |
+  .---+---.
+  |       |
+  '-------'
+    |   |
+    |   |
+   _|   |_</pre></div>
+        <div class="carte-titre">Robot</div>
+      </div>
+
+      <div class="carte" style="background: #2a0a1b">
+        <div class="carte-corps"><pre>
+  **    **
+ ****  ****
+**********
+**********
+ ********
+  ******
+   ****
+    **
+     *</pre></div>
+        <div class="carte-titre">Coeur</div>
+      </div>
+
+      <div class="carte" style="background: #0a1a2a">
+        <div class="carte-corps"><pre>
+  \   |   /
+   \  |  /
+----( O )----
+   /  |  \
+  /   |   \
+      |
+   /-----\
+  / ----- \
+ /  -----  \</pre></div>
+        <div class="carte-titre">Soleil</div>
+      </div>
 
     </div>
   </div>
@@ -164,24 +289,45 @@
 
   <script>
     // ==============================
-    // À MODIFIER : vitesse du défilement avec la molette
+    // À MODIFIER : vitesse molette
     // ==============================
     const VITESSE_MOLETTE = 1.5;
 
     // ==============================
-    // Le code qui fait bouger le carrousel
-    // (tu peux regarder mais pas besoin de changer !)
+    // Auto-ajustement de l'ASCII art
     // ==============================
+    function ajusterAsciiArt() {
+      document.querySelectorAll('.carte-corps pre').forEach(pre => {
+        // Reset d'abord pour mesurer la taille réelle
+        pre.style.transform = 'scale(1)';
+        pre.style.fontSize  = '14px';
 
-    const piste    = document.getElementById('piste');
-    const fenetre  = document.getElementById('fenetre');
-    const cartes   = document.querySelectorAll('.carte');
+        const corps  = pre.closest('.carte-corps');
+        const maxW   = corps.offsetWidth  - 24;   // padding 12px × 2
+        const maxH   = corps.offsetHeight - 24;
+        const preW   = pre.scrollWidth;
+        const preH   = pre.scrollHeight;
+
+        // Échelle pour tenir dans la zone, jamais plus grand que 1
+        const echelle = Math.min(maxW / preW, maxH / preH, 1);
+        pre.style.transform = `scale(${echelle})`;
+      });
+    }
+
+    window.addEventListener('load', ajusterAsciiArt);
+
+    // ==============================
+    // Mécanique du carrousel
+    // ==============================
+    const piste   = document.getElementById('piste');
+    const fenetre = document.getElementById('fenetre');
+    const cartes  = document.querySelectorAll('.carte');
     const conteneurPoints = document.getElementById('points');
 
     let indexActuel = 0;
     const nbCartes  = cartes.length;
 
-    // Créer les points indicateurs
+    // Points indicateurs
     for (let i = 0; i < nbCartes; i++) {
       const pt = document.createElement('div');
       pt.className = 'point' + (i === 0 ? ' actif' : '');
@@ -190,43 +336,24 @@
     }
 
     function allerA(index) {
-      // Limiter entre 0 et le dernier
       indexActuel = Math.max(0, Math.min(index, nbCartes - 1));
-
-      // Calculer le déplacement
-      const largeurCarte = cartes[0].offsetWidth + 20; // 20 = gap
-      const decalage = indexActuel * largeurCarte;
-
-      piste.style.transform = `translateX(-${decalage}px)`;
-
-      // Mettre à jour les points
+      const pas   = cartes[0].offsetWidth + 20; // largeur carte + gap
+      piste.style.transform = `translateX(-${indexActuel * pas}px)`;
       document.querySelectorAll('.point').forEach((pt, i) => {
         pt.classList.toggle('actif', i === indexActuel);
       });
     }
 
-    // Boutons
-    document.getElementById('btnGauche').addEventListener('click', () => {
-      allerA(indexActuel - 1);
-    });
+    document.getElementById('btnGauche').addEventListener('click', () => allerA(indexActuel - 1));
+    document.getElementById('btnDroite').addEventListener('click', () => allerA(indexActuel + 1));
 
-    document.getElementById('btnDroite').addEventListener('click', () => {
-      allerA(indexActuel + 1);
-    });
-
-    // Molette de la souris → déplacer horizontalement
     let accumulateur = 0;
     fenetre.addEventListener('wheel', (e) => {
       e.preventDefault();
       accumulateur += e.deltaY * VITESSE_MOLETTE;
-
-      const largeurCarte = cartes[0].offsetWidth + 20;
-      const nouvelIndex  = Math.round(accumulateur / largeurCarte);
-
-      allerA(nouvelIndex);
+      allerA(Math.round(accumulateur / (cartes[0].offsetWidth + 20)));
     }, { passive: false });
 
-    // Clavier : flèches gauche/droite
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft')  allerA(indexActuel - 1);
       if (e.key === 'ArrowRight') allerA(indexActuel + 1);
