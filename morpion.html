@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Morpion</title>
+  <style>
+    /* ==============================
+       À MODIFIER : les couleurs !
+       ============================== */
+    :root {
+      --couleur-fond:      #2d3436;
+      --couleur-titre:     #fdcb6e;
+      --couleur-grille:    #636e72;
+      --couleur-joueur-x:  #e17055;   /* rouge-orange pour X */
+      --couleur-joueur-o:  #74b9ff;   /* bleu pour O */
+      --couleur-gagnant:   #55efc4;   /* vert pour la ligne gagnante */
+      --couleur-bouton:    #fdcb6e;
+    }
+
+    /* ==============================
+       À MODIFIER : les symboles !
+       Change 'X' et 'O' par des émojis
+       si tu veux, ex: '🔥' et '💧'
+       ============================== */
+    :root {
+      --symbole-x: 'X';
+      --symbole-o: 'O';
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--couleur-fond);
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 25px;
+    }
+
+    h1 {
+      color: var(--couleur-titre);
+      font-size: 2.5em;
+      letter-spacing: 4px;
+    }
+
+    /* Bandeau qui indique le joueur actuel */
+    .tour {
+      font-size: 1.3em;
+      color: white;
+      background: rgba(255,255,255,0.1);
+      padding: 12px 30px;
+      border-radius: 50px;
+      min-width: 260px;
+      text-align: center;
+      transition: background 0.3s;
+    }
+
+    .tour .joueur-x { color: var(--couleur-joueur-x); font-weight: bold; font-size: 1.2em; }
+    .tour .joueur-o { color: var(--couleur-joueur-o); font-weight: bold; font-size: 1.2em; }
+
+    /* La grille 3×3 */
+    .grille {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      background: var(--couleur-grille);
+      padding: 8px;
+      border-radius: 15px;
+    }
+
+    /* Chaque case */
+    .case {
+      width: 120px;
+      height: 120px;
+      background: var(--couleur-fond);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5em;
+      font-weight: 900;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .case:hover:not(.jouee) {
+      background: rgba(255,255,255,0.07);
+    }
+
+    .case:active:not(.jouee) {
+      transform: scale(0.93);
+    }
+
+    /* Cases jouées */
+    .case.x { color: var(--couleur-joueur-x); cursor: default; }
+    .case.o { color: var(--couleur-joueur-o); cursor: default; }
+
+    /* Cases de la ligne gagnante */
+    .case.gagnante {
+      background: rgba(85, 239, 196, 0.2);
+      color: var(--couleur-gagnant) !important;
+      animation: pulse 0.6s ease infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1);    box-shadow: 0 0 10px var(--couleur-gagnant); }
+      to   { transform: scale(1.06); box-shadow: 0 0 25px var(--couleur-gagnant); }
+    }
+
+    /* Scores */
+    .scores {
+      display: flex;
+      gap: 20px;
+    }
+
+    .score-bloc {
+      background: rgba(255,255,255,0.07);
+      border-radius: 15px;
+      padding: 15px 25px;
+      text-align: center;
+      min-width: 100px;
+    }
+
+    .score-bloc .nom  { font-size: 0.85em; color: #aaa; text-transform: uppercase; letter-spacing: 2px; }
+    .score-bloc .pts  { font-size: 2.5em; font-weight: bold; }
+    .score-bloc.x .pts { color: var(--couleur-joueur-x); }
+    .score-bloc.o .pts { color: var(--couleur-joueur-o); }
+    .score-bloc.egal .pts { color: #aaa; }
+
+    button {
+      background: var(--couleur-bouton);
+      color: #2d3436;
+      border: none;
+      border-radius: 50px;
+      padding: 14px 40px;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    button:hover {
+      opacity: 0.85;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>❌ Morpion ⭕</h1>
+
+  <div class="tour" id="tour">
+    Tour de <span class="joueur-x">X</span>
+  </div>
+
+  <div class="grille" id="grille">
+    <!-- Les 9 cases sont créées par le JS -->
+  </div>
+
+  <div class="scores">
+    <div class="score-bloc x">
+      <div class="nom">Joueur X</div>
+      <div class="pts" id="score-x">0</div>
+    </div>
+    <div class="score-bloc egal">
+      <div class="nom">Égalité</div>
+      <div class="pts" id="score-egal">0</div>
+    </div>
+    <div class="score-bloc o">
+      <div class="nom">Joueur O</div>
+      <div class="pts" id="score-o">0</div>
+    </div>
+  </div>
+
+  <button onclick="nouvellePartie()">🔄 Nouvelle partie</button>
+
+  <script>
+    // ==============================
+    // À MODIFIER : les noms des joueurs
+    // ==============================
+    const NOM_X = 'X';
+    const NOM_O = 'O';
+
+    // ==============================
+    // Le code du jeu
+    // ==============================
+
+    // Les 8 combinaisons gagnantes (indices des cases 0→8)
+    //   0 | 1 | 2
+    //   ---------
+    //   3 | 4 | 5
+    //   ---------
+    //   6 | 7 | 8
+    const COMBINAISONS_GAGNANTES = [
+      [0, 1, 2], // ligne du haut
+      [3, 4, 5], // ligne du milieu
+      [6, 7, 8], // ligne du bas
+      [0, 3, 6], // colonne gauche
+      [1, 4, 7], // colonne milieu
+      [2, 5, 8], // colonne droite
+      [0, 4, 8], // diagonale ↘
+      [2, 4, 6], // diagonale ↙
+    ];
+
+    let plateau      = Array(9).fill(null); // null, 'X' ou 'O'
+    let joueurActuel = 'X';
+    let partieTerminee = false;
+
+    let scoreX    = 0;
+    let scoreO    = 0;
+    let scoreEgal = 0;
+
+    // Créer les 9 cases
+    const grille = document.getElementById('grille');
+    for (let i = 0; i < 9; i++) {
+      const div = document.createElement('div');
+      div.className = 'case';
+      div.dataset.index = i;
+      div.addEventListener('click', () => jouer(i));
+      grille.appendChild(div);
+    }
+
+    function jouer(index) {
+      if (partieTerminee) return;
+      if (plateau[index] !== null) return; // case déjà jouée
+
+      // Jouer la case
+      plateau[index] = joueurActuel;
+      const caseDiv = grille.children[index];
+      caseDiv.textContent = joueurActuel;
+      caseDiv.classList.add(joueurActuel.toLowerCase(), 'jouee');
+
+      // Vérifier si quelqu'un a gagné
+      const ligneGagnante = trouverLigneGagnante();
+
+      if (ligneGagnante) {
+        // Victoire !
+        partieTerminee = true;
+        ligneGagnante.forEach(i => grille.children[i].classList.add('gagnante'));
+
+        if (joueurActuel === 'X') {
+          scoreX++;
+          document.getElementById('score-x').textContent = scoreX;
+          afficherTour(`🎉 ${NOM_X} a gagné !`, false);
+        } else {
+          scoreO++;
+          document.getElementById('score-o').textContent = scoreO;
+          afficherTour(`🎉 ${NOM_O} a gagné !`, false);
+        }
+
+      } else if (plateau.every(c => c !== null)) {
+        // Match nul (toutes les cases remplies)
+        partieTerminee = true;
+        scoreEgal++;
+        document.getElementById('score-egal').textContent = scoreEgal;
+        afficherTour('🤝 Égalité !', false);
+
+      } else {
+        // Changer de joueur
+        joueurActuel = joueurActuel === 'X' ? 'O' : 'X';
+        afficherTour(`Tour de`, true);
+      }
+    }
+
+    function trouverLigneGagnante() {
+      for (const combo of COMBINAISONS_GAGNANTES) {
+        const [a, b, c] = combo;
+        if (plateau[a] && plateau[a] === plateau[b] && plateau[a] === plateau[c]) {
+          return combo; // retourne les indices gagnants
+        }
+      }
+      return null;
+    }
+
+    function afficherTour(texte, avecJoueur) {
+      const div = document.getElementById('tour');
+      if (avecJoueur) {
+        const classe  = joueurActuel === 'X' ? 'joueur-x' : 'joueur-o';
+        const symbole = joueurActuel === 'X' ? NOM_X : NOM_O;
+        div.innerHTML = `${texte} <span class="${classe}">${symbole}</span>`;
+      } else {
+        div.innerHTML = texte;
+      }
+    }
+
+    function nouvellePartie() {
+      plateau        = Array(9).fill(null);
+      joueurActuel   = 'X';
+      partieTerminee = false;
+
+      // Réinitialiser les cases
+      Array.from(grille.children).forEach(c => {
+        c.textContent = '';
+        c.className   = 'case';
+      });
+
+      afficherTour('Tour de', true);
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Carrousel</title>
+  <style>
+    /* ==============================
+       À MODIFIER : les couleurs !
+       ============================== */
+    :root {
+      --couleur-fond:    #1a1a2e;
+      --couleur-titre:   #e94560;
+      --couleur-carte-1: #e94560;
+      --couleur-carte-2: #f5a623;
+      --couleur-carte-3: #4ecdc4;
+      --couleur-carte-4: #a29bfe;
+      --couleur-carte-5: #55efc4;
+      --couleur-carte-6: #fd79a8;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--couleur-fond);
+      font-family: 'Segoe UI', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    h1 {
+      color: var(--couleur-titre);
+      font-size: 2em;
+      margin-bottom: 30px;
+      letter-spacing: 3px;
+    }
+
+    .astuce {
+      color: #888;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+    }
+
+    /* Le conteneur du carrousel */
+    .carrousel-fenetre {
+      width: 80vw;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .carrousel-piste {
+      display: flex;
+      gap: 20px;
+      transition: transform 0.4s ease;
+      /* La piste se déplace grâce au JS */
+    }
+
+    /* ==============================
+       À MODIFIER : les cartes !
+       ============================== */
+    .carte {
+      min-width: 220px;
+      height: 300px;
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 4em;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+
+    .carte:hover {
+      transform: scale(1.05) translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+    }
+
+    .carte p {
+      font-size: 0.35em;
+      margin-top: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Boutons navigation */
+    .boutons {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+    }
+
+    button {
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50px;
+      padding: 12px 30px;
+      font-size: 1.2em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* Indicateurs points */
+    .points {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .point {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transition: background 0.3s, transform 0.3s;
+    }
+
+    .point.actif {
+      background: var(--couleur-titre);
+      transform: scale(1.4);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎠 Mon Carrousel</h1>
+  <p class="astuce">Utilise la molette de la souris ou les boutons !</p>
+
+  <div class="carrousel-fenetre" id="fenetre">
+    <div class="carrousel-piste" id="piste">
+
+      <!-- ==============================
+           À MODIFIER : ajoute tes cartes !
+           Change les émojis et les textes.
+           ============================== -->
+      <div class="carte" style="background: var(--couleur-carte-1)">🌟<p>Étoile</p></div>
+      <div class="carte" style="background: var(--couleur-carte-2)">🚀<p>Fusée</p></div>
+      <div class="carte" style="background: var(--couleur-carte-3)">🌊<p>Vague</p></div>
+      <div class="carte" style="background: var(--couleur-carte-4)">🦄<p>Licorne</p></div>
+      <div class="carte" style="background: var(--couleur-carte-5)">🌈<p>Arc-en-ciel</p></div>
+      <div class="carte" style="background: var(--couleur-carte-6)">🎵<p>Musique</p></div>
+
+    </div>
+  </div>
+
+  <div class="boutons">
+    <button id="btnGauche">← Gauche</button>
+    <button id="btnDroite">Droite →</button>
+  </div>
+
+  <div class="points" id="points"></div>
+
+  <script>
+    // ==============================
+    // À MODIFIER : vitesse du défilement avec la molette
+    // ==============================
+    const VITESSE_MOLETTE = 1.5;
+
+    // ==============================
+    // Le code qui fait bouger le carrousel
+    // (tu peux regarder mais pas besoin de changer !)
+    // ==============================
+
+    const piste    = document.getElementById('piste');
+    const fenetre  = document.getElementById('fenetre');
+    const cartes   = document.querySelectorAll('.carte');
+    const conteneurPoints = document.getElementById('points');
+
+    let indexActuel = 0;
+    const nbCartes  = cartes.length;
+
+    // Créer les points indicateurs
+    for (let i = 0; i < nbCartes; i++) {
+      const pt = document.createElement('div');
+      pt.className = 'point' + (i === 0 ? ' actif' : '');
+      pt.addEventListener('click', () => allerA(i));
+      conteneurPoints.appendChild(pt);
+    }
+
+    function allerA(index) {
+      // Limiter entre 0 et le dernier
+      indexActuel = Math.max(0, Math.min(index, nbCartes - 1));
+
+      // Calculer le déplacement
+      const largeurCarte = cartes[0].offsetWidth + 20; // 20 = gap
+      const decalage = indexActuel * largeurCarte;
+
+      piste.style.transform = `translateX(-${decalage}px)`;
+
+      // Mettre à jour les points
+      document.querySelectorAll('.point').forEach((pt, i) => {
+        pt.classList.toggle('actif', i === indexActuel);
+      });
+    }
+
+    // Boutons
+    document.getElementById('btnGauche').addEventListener('click', () => {
+      allerA(indexActuel - 1);
+    });
+
+    document.getElementById('btnDroite').addEventListener('click', () => {
+      allerA(indexActuel + 1);
+    });
+
+    // Molette de la souris → déplacer horizontalement
+    let accumulateur = 0;
+    fenetre.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      accumulateur += e.deltaY * VITESSE_MOLETTE;
+
+      const largeurCarte = cartes[0].offsetWidth + 20;
+      const nouvelIndex  = Math.round(accumulateur / largeurCarte);
+
+      allerA(nouvelIndex);
+    }, { passive: false });
+
+    // Clavier : flèches gauche/droite
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft')  allerA(indexActuel - 1);
+      if (e.key === 'ArrowRight') allerA(indexActuel + 1);
+    });
+  </script>
+
+</body>
+</html>

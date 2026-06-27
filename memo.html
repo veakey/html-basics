@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Jeu de Mémo</title>
+  <style>
+    /* ==============================
+       À MODIFIER : les couleurs !
+       ============================== */
+    :root {
+      --couleur-fond:      #0f3460;
+      --couleur-titre:     #e94560;
+      --couleur-dos-carte: #16213e;
+      --couleur-bord:      #533483;
+      --couleur-trouvee:   #2ecc71;
+      --couleur-bouton:    #e94560;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--couleur-fond);
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+    }
+
+    h1 {
+      color: var(--couleur-titre);
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .infos {
+      color: #aaa;
+      display: flex;
+      gap: 40px;
+      margin-bottom: 25px;
+      font-size: 1.1em;
+    }
+
+    .infos span {
+      color: white;
+      font-weight: bold;
+    }
+
+    /* La grille de cartes */
+    .grille {
+      display: grid;
+      /* ==============================
+         À MODIFIER : nb de colonnes
+         (4 = 4 colonnes)
+         ============================== */
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      max-width: 500px;
+    }
+
+    /* Chaque carte = une boite qui se retourne */
+    .carte {
+      width: 100px;
+      height: 100px;
+      cursor: pointer;
+      perspective: 600px; /* nécessaire pour l'effet 3D */
+    }
+
+    .carte-interieur {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transition: transform 0.5s;
+      transform-style: preserve-3d;
+    }
+
+    /* Quand la carte est retournée */
+    .carte.retournee .carte-interieur {
+      transform: rotateY(180deg);
+    }
+
+    /* Quand la paire est trouvée */
+    .carte.trouvee .dos,
+    .carte.trouvee .face {
+      border-color: var(--couleur-trouvee);
+      box-shadow: 0 0 20px var(--couleur-trouvee);
+    }
+
+    .face, .dos {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 15px;
+      border: 3px solid var(--couleur-bord);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3em;
+      backface-visibility: hidden; /* cache l'autre côté */
+    }
+
+    /* Le dos de la carte (face cachée) */
+    .dos {
+      background: var(--couleur-dos-carte);
+      color: #533483;
+      font-size: 2em;
+    }
+
+    /* La face de la carte (face visible avec l'émoji) */
+    .face {
+      background: #1a1a3e;
+      transform: rotateY(180deg); /* déjà retournée, sera visible quand la carte tourne */
+    }
+
+    .message {
+      color: #ffd700;
+      font-size: 1.5em;
+      margin-top: 25px;
+      min-height: 40px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    button {
+      margin-top: 20px;
+      background: var(--couleur-bouton);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 14px 35px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    button:hover {
+      opacity: 0.85;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🧠 Jeu de Mémo</h1>
+
+  <div class="infos">
+    Tentatives : <span id="tentatives">0</span>
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    Paires trouvées : <span id="score">0</span> / <span id="total">0</span>
+  </div>
+
+  <div class="grille" id="grille"></div>
+
+  <p class="message" id="message"></p>
+
+  <button onclick="demarrer()">🔄 Nouvelle partie</button>
+
+  <script>
+    // ==============================
+    // À MODIFIER : les émojis des paires !
+    // Chaque émoji apparaîtra 2 fois.
+    // Ajoute ou enlèves-en (garde un nombre pair !)
+    // ==============================
+    const EMOJIS = [
+      '🐶', '🐱', '🐸', '🦊',
+      '🌸', '⭐', '🍕', '🎸'
+    ];
+
+    // ==============================
+    // Le code du jeu
+    // ==============================
+
+    let carteRetournee1 = null;
+    let carteRetournee2 = null;
+    let bloque          = false;
+    let nbTentatives    = 0;
+    let nbTrouvees      = 0;
+    const nbPaires      = EMOJIS.length;
+
+    document.getElementById('total').textContent = nbPaires;
+
+    function demarrer() {
+      // Réinitialiser
+      nbTentatives = 0;
+      nbTrouvees   = 0;
+      carteRetournee1 = null;
+      carteRetournee2 = null;
+      bloque          = false;
+      document.getElementById('tentatives').textContent = 0;
+      document.getElementById('score').textContent      = 0;
+      document.getElementById('message').textContent    = '';
+
+      // Mélanger : doubler les émojis puis mélanger
+      const liste = [...EMOJIS, ...EMOJIS].sort(() => Math.random() - 0.5);
+
+      // Créer la grille
+      const grille = document.getElementById('grille');
+      grille.innerHTML = '';
+
+      liste.forEach((emoji, i) => {
+        const carte = document.createElement('div');
+        carte.className = 'carte';
+        carte.dataset.valeur = emoji;
+        carte.innerHTML = `
+          <div class="carte-interieur">
+            <div class="dos">❓</div>
+            <div class="face">${emoji}</div>
+          </div>
+        `;
+        carte.addEventListener('click', () => retournerCarte(carte));
+        grille.appendChild(carte);
+      });
+    }
+
+    function retournerCarte(carte) {
+      // Ignorer si : bloqué, déjà retournée, déjà trouvée
+      if (bloque) return;
+      if (carte.classList.contains('retournee')) return;
+      if (carte.classList.contains('trouvee')) return;
+
+      carte.classList.add('retournee');
+
+      if (!carteRetournee1) {
+        // Première carte retournée
+        carteRetournee1 = carte;
+      } else {
+        // Deuxième carte retournée
+        carteRetournee2 = carte;
+        nbTentatives++;
+        document.getElementById('tentatives').textContent = nbTentatives;
+
+        verifierPaire();
+      }
+    }
+
+    function verifierPaire() {
+      const valeur1 = carteRetournee1.dataset.valeur;
+      const valeur2 = carteRetournee2.dataset.valeur;
+
+      if (valeur1 === valeur2) {
+        // Paire trouvée !
+        carteRetournee1.classList.add('trouvee');
+        carteRetournee2.classList.add('trouvee');
+        nbTrouvees++;
+        document.getElementById('score').textContent = nbTrouvees;
+
+        carteRetournee1 = null;
+        carteRetournee2 = null;
+
+        if (nbTrouvees === nbPaires) {
+          document.getElementById('message').textContent =
+            `🎉 Bravo ! Gagné en ${nbTentatives} tentatives !`;
+        }
+      } else {
+        // Pas une paire → on retourne face cachée après un délai
+        bloque = true;
+        setTimeout(() => {
+          carteRetournee1.classList.remove('retournee');
+          carteRetournee2.classList.remove('retournee');
+          carteRetournee1 = null;
+          carteRetournee2 = null;
+          bloque = false;
+        }, 900);
+      }
+    }
+
+    // Lancer une partie au chargement
+    demarrer();
+  </script>
+
+</body>
+</html>
